@@ -121,7 +121,7 @@ public class RegisterDriverWindow extends JFrame {
         add(photoLabel);
 
         takePhotoButton = new JButton("Tomar foto");
-        takePhotoButton.setBounds(30, 420, 150, 30);
+        takePhotoButton.setBounds(125, 420, 150, 30);
         takePhotoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

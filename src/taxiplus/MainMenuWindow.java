@@ -42,11 +42,16 @@ public class MainMenuWindow extends JFrame {
             }
         });
 
-        // Ejemplo de otras acciones para los demás botones
+        // Acción del botón "Conductores registrados"
         conductoresButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null, "Mostrar conductores registrados");
+                // Cerrar el menú principal
+                dispose();
+
+                // Abrir la ventana de "Conductores Registrados"
+                RegisteredDriversWindow registeredDriversWindow = new RegisteredDriversWindow();
+                registeredDriversWindow.setVisible(true);
             }
         });
 
