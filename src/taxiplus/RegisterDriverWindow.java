@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage; // Import necesario para BufferedImage
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -17,7 +18,7 @@ public class RegisterDriverWindow extends JFrame {
     private JTextField cedulaField, nombresField, apellidosField, nacimientoField, licenciaField;
     private JLabel photoLabel;
     private ImageIcon photo;
-    private JButton takePhotoButton, retakePhotoButton;
+    private JButton takePhotoButton;
 
     public RegisterDriverWindow() {
         setTitle("Registrar Conductor - TaxiPlus");
@@ -26,12 +27,24 @@ public class RegisterDriverWindow extends JFrame {
         setLocationRelativeTo(null);
         setLayout(null);
 
+        // Botón "Volver atrás"
+        JButton backButton = new JButton("Volver atrás");
+        backButton.setBounds(10, 10, 120, 25); // Posición en la parte superior izquierda
+        backButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose(); // Cierra la ventana actual
+                new MainMenuWindow().setVisible(true); // Abre el menú principal
+            }
+        });
+        add(backButton);
+
         JLabel cedulaLabel = new JLabel("Cédula:");
-        cedulaLabel.setBounds(30, 30, 100, 25);
+        cedulaLabel.setBounds(30, 50, 100, 25);
         add(cedulaLabel);
 
         cedulaField = new JTextField();
-        cedulaField.setBounds(150, 30, 200, 25);
+        cedulaField.setBounds(150, 50, 200, 25);
         cedulaField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -44,11 +57,11 @@ public class RegisterDriverWindow extends JFrame {
         add(cedulaField);
 
         JLabel nombresLabel = new JLabel("Nombres:");
-        nombresLabel.setBounds(30, 70, 100, 25);
+        nombresLabel.setBounds(30, 90, 100, 25);
         add(nombresLabel);
 
         nombresField = new JTextField();
-        nombresField.setBounds(150, 70, 200, 25);
+        nombresField.setBounds(150, 90, 200, 25);
         nombresField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -62,11 +75,11 @@ public class RegisterDriverWindow extends JFrame {
         add(nombresField);
 
         JLabel apellidosLabel = new JLabel("Apellidos:");
-        apellidosLabel.setBounds(30, 110, 100, 25);
+        apellidosLabel.setBounds(30, 130, 100, 25);
         add(apellidosLabel);
 
         apellidosField = new JTextField();
-        apellidosField.setBounds(150, 110, 200, 25);
+        apellidosField.setBounds(150, 130, 200, 25);
         apellidosField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -80,60 +93,50 @@ public class RegisterDriverWindow extends JFrame {
         add(apellidosField);
 
         JLabel nacimientoLabel = new JLabel("Fecha de nacimiento (DD/MM/AAAA):");
-        nacimientoLabel.setBounds(30, 150, 300, 25);
+        nacimientoLabel.setBounds(30, 170, 300, 25);
         add(nacimientoLabel);
 
         nacimientoField = new JTextField();
-        nacimientoField.setBounds(30, 180, 320, 25);
+        nacimientoField.setBounds(30, 200, 320, 25);
         nacimientoField.addKeyListener(new DateValidationKeyListener(nacimientoField, 18, "El conductor debe tener al menos 18 años."));
         add(nacimientoField);
 
         JLabel licenciaLabel = new JLabel("Expedición licencia (DD/MM/AAAA):");
-        licenciaLabel.setBounds(30, 220, 300, 25);
+        licenciaLabel.setBounds(30, 240, 300, 25);
         add(licenciaLabel);
 
         licenciaField = new JTextField();
-        licenciaField.setBounds(30, 250, 320, 25);
+        licenciaField.setBounds(30, 270, 320, 25);
         licenciaField.addKeyListener(new DateValidationKeyListener(licenciaField, 16, "La fecha de expedición de licencia debe ser al menos 16 años después de la fecha de nacimiento.", nacimientoField));
         add(licenciaField);
 
         // Foto
         JLabel photoTitleLabel = new JLabel("Foto:");
-        photoTitleLabel.setBounds(30, 290, 100, 25);
+        photoTitleLabel.setBounds(30, 310, 100, 25);
         add(photoTitleLabel);
 
         photoLabel = new JLabel();
-        photoLabel.setBounds(150, 290, 100, 100);
+        photoLabel.setBounds(150, 310, 100, 100);
         photoLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         add(photoLabel);
 
         takePhotoButton = new JButton("Tomar foto");
-        takePhotoButton.setBounds(30, 400, 120, 30);
+        takePhotoButton.setBounds(30, 420, 150, 30);
         takePhotoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                takePhotoButton.setEnabled(false); // Deshabilitar botón para evitar múltiples aperturas
                 openCamera();
             }
         });
         add(takePhotoButton);
 
-        retakePhotoButton = new JButton("Tomar otra foto");
-        retakePhotoButton.setBounds(200, 400, 150, 30);
-        retakePhotoButton.setVisible(false);
-        retakePhotoButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                openCamera();
-            }
-        });
-        add(retakePhotoButton);
-
         JButton registerButton = new JButton("Registrar");
-        registerButton.setBounds(30, 450, 320, 30);
+        registerButton.setBounds(30, 470, 320, 30);
         registerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (validateFields()) {
+                if (validateFields() && !isCedulaRegistered(cedulaField.getText())) {
                     saveToDatabase();
                 }
             }
@@ -150,9 +153,9 @@ public class RegisterDriverWindow extends JFrame {
                 photoLabel.setIcon(thumbnail);
                 photo = thumbnail;
 
-                // Cambiar el estado de los botones
-                takePhotoButton.setVisible(false);
-                retakePhotoButton.setVisible(true);
+                // Cambiar el texto del botón y habilitarlo nuevamente
+                takePhotoButton.setText("Tomar otra foto");
+                takePhotoButton.setEnabled(true); // Rehabilitar el botón
             }
         }).setVisible(true);
     }
@@ -164,6 +167,24 @@ public class RegisterDriverWindow extends JFrame {
             return false;
         }
         return true;
+    }
+
+    private boolean isCedulaRegistered(String cedula) {
+        try (Connection connection = DatabaseConnection.getConnection()) {
+            String sql = "SELECT COUNT(*) FROM Conductores WHERE cedula = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, cedula);
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next() && resultSet.getInt(1) > 0) {
+                JOptionPane.showMessageDialog(this, "La cédula ingresada ya está registrada.");
+                return true;
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Error al validar la cédula: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        return false;
     }
 
     private void saveToDatabase() {
@@ -213,7 +234,6 @@ public class RegisterDriverWindow extends JFrame {
             int rowsInserted = statement.executeUpdate();
             if (rowsInserted > 0) {
                 JOptionPane.showMessageDialog(this, "Conductor registrado correctamente.");
-                dispose(); // Cerrar la ventana tras éxito
             }
         } catch (SQLException | ParseException ex) {
             JOptionPane.showMessageDialog(this, "Error al guardar en la base de datos: " + ex.getMessage());
