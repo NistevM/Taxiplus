@@ -3,7 +3,7 @@ package taxiplus;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage; // Import necesario para BufferedImage
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,26 +15,26 @@ import java.util.Date;
 import javax.imageio.ImageIO;
 
 public class RegisterDriverWindow extends JFrame {
-    private JTextField cedulaField, nombresField, apellidosField, nacimientoField, licenciaField;
+    private JTextField cedulaField, nombresField, apellidosField, telefonoField, nacimientoField, licenciaField;
     private JLabel photoLabel;
     private ImageIcon photo;
+    private BufferedImage originalCapturedPhoto;
     private JButton takePhotoButton;
 
     public RegisterDriverWindow() {
         setTitle("Registrar Conductor - TaxiPlus");
-        setSize(400, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 650);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Cambiado a DISPOSE_ON_CLOSE
         setLocationRelativeTo(null);
         setLayout(null);
 
-        // Botón "Volver atrás"
         JButton backButton = new JButton("Volver atrás");
-        backButton.setBounds(10, 10, 120, 25); // Posición en la parte superior izquierda
+        backButton.setBounds(10, 10, 120, 25);
         backButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                dispose(); // Cierra la ventana actual
-                new MainMenuWindow().setVisible(true); // Abre el menú principal
+                dispose();
+                new DriversMenuWindow().setVisible(true); // Regresa a DriversMenuWindow
             }
         });
         add(backButton);
@@ -49,8 +49,8 @@ public class RegisterDriverWindow extends JFrame {
             @Override
             public void keyTyped(KeyEvent e) {
                 char c = e.getKeyChar();
-                if (!Character.isDigit(c)) {
-                    e.consume(); // Solo números permitidos
+                if (!Character.isDigit(c) || cedulaField.getText().length() >= 10) {
+                    e.consume(); // Solo números permitidos y máximo 10 dígitos
                 }
             }
         });
@@ -68,7 +68,7 @@ public class RegisterDriverWindow extends JFrame {
                 char c = e.getKeyChar();
                 String text = nombresField.getText();
                 if (!Character.isLetter(c) && c != ' ' || (c == ' ' && text.contains(" "))) {
-                    e.consume(); // Solo letras y un espacio permitido
+                    e.consume();
                 }
             }
         });
@@ -86,53 +86,69 @@ public class RegisterDriverWindow extends JFrame {
                 char c = e.getKeyChar();
                 String text = apellidosField.getText();
                 if (!Character.isLetter(c) && c != ' ' || (c == ' ' && text.contains(" "))) {
-                    e.consume(); // Solo letras y un espacio permitido
+                    e.consume();
                 }
             }
         });
         add(apellidosField);
 
+        JLabel telefonoLabel = new JLabel("Teléfono:");
+        telefonoLabel.setBounds(30, 170, 100, 25);
+        add(telefonoLabel);
+
+        telefonoField = new JTextField();
+        telefonoField.setBounds(150, 170, 200, 25);
+        telefonoField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+                if (!Character.isDigit(c) || telefonoField.getText().length() >= 10) {
+                    e.consume(); // Solo números permitidos y máximo 10 dígitos
+                }
+            }
+        });
+        add(telefonoField);
+
         JLabel nacimientoLabel = new JLabel("Fecha de nacimiento (DD/MM/AAAA):");
-        nacimientoLabel.setBounds(30, 170, 300, 25);
+        nacimientoLabel.setBounds(30, 210, 300, 25);
         add(nacimientoLabel);
 
         nacimientoField = new JTextField();
-        nacimientoField.setBounds(30, 200, 320, 25);
+        nacimientoField.setBounds(30, 240, 320, 25);
         nacimientoField.addKeyListener(new DateValidationKeyListener(nacimientoField, 18, "El conductor debe tener al menos 18 años."));
         add(nacimientoField);
 
         JLabel licenciaLabel = new JLabel("Expedición licencia (DD/MM/AAAA):");
-        licenciaLabel.setBounds(30, 240, 300, 25);
+        licenciaLabel.setBounds(30, 280, 300, 25);
         add(licenciaLabel);
 
         licenciaField = new JTextField();
-        licenciaField.setBounds(30, 270, 320, 25);
+        licenciaField.setBounds(30, 310, 320, 25);
         licenciaField.addKeyListener(new DateValidationKeyListener(licenciaField, 16, "La fecha de expedición de licencia debe ser al menos 16 años después de la fecha de nacimiento.", nacimientoField));
         add(licenciaField);
 
-        // Foto
         JLabel photoTitleLabel = new JLabel("Foto:");
-        photoTitleLabel.setBounds(30, 310, 100, 25);
+        photoTitleLabel.setBounds(30, 350, 100, 25);
         add(photoTitleLabel);
 
         photoLabel = new JLabel();
-        photoLabel.setBounds(150, 310, 100, 100);
+        photoLabel.setBounds(150, 350, 100, 100);
         photoLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         add(photoLabel);
 
         takePhotoButton = new JButton("Tomar foto");
-        takePhotoButton.setBounds(125, 420, 150, 30);
+        takePhotoButton.setBounds(125, 460, 150, 30);
         takePhotoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                takePhotoButton.setEnabled(false); // Deshabilitar botón para evitar múltiples aperturas
+                takePhotoButton.setEnabled(false);
                 openCamera();
             }
         });
         add(takePhotoButton);
 
         JButton registerButton = new JButton("Registrar");
-        registerButton.setBounds(30, 470, 320, 30);
+        registerButton.setBounds(30, 510, 320, 30);
         registerButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -144,25 +160,9 @@ public class RegisterDriverWindow extends JFrame {
         add(registerButton);
     }
 
-    private void openCamera() {
-        new CameraWindow(new CameraWindow.PhotoCaptureListener() {
-            @Override
-            public void onPhotoCaptured(BufferedImage capturedPhoto) {
-                // Mostrar la foto capturada en el JLabel
-                ImageIcon thumbnail = new ImageIcon(capturedPhoto.getScaledInstance(photoLabel.getWidth(), photoLabel.getHeight(), Image.SCALE_SMOOTH));
-                photoLabel.setIcon(thumbnail);
-                photo = thumbnail;
-
-                // Cambiar el texto del botón y habilitarlo nuevamente
-                takePhotoButton.setText("Tomar otra foto");
-                takePhotoButton.setEnabled(true); // Rehabilitar el botón
-            }
-        }).setVisible(true);
-    }
-
     private boolean validateFields() {
         if (cedulaField.getText().isEmpty() || nombresField.getText().isEmpty() || apellidosField.getText().isEmpty() ||
-                nacimientoField.getText().isEmpty() || licenciaField.getText().isEmpty()) {
+                telefonoField.getText().isEmpty() || nacimientoField.getText().isEmpty() || licenciaField.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Todos los campos son obligatorios.");
             return false;
         }
@@ -187,30 +187,46 @@ public class RegisterDriverWindow extends JFrame {
         return false;
     }
 
+    private void openCamera() {
+        CameraWindow cameraWindow = new CameraWindow(new CameraWindow.PhotoCaptureListener() {
+            @Override
+            public void onPhotoCaptured(BufferedImage capturedPhoto) {
+                originalCapturedPhoto = capturedPhoto;
+
+                ImageIcon thumbnail = new ImageIcon(capturedPhoto.getScaledInstance(photoLabel.getWidth(), photoLabel.getHeight(), Image.SCALE_SMOOTH));
+                photoLabel.setIcon(thumbnail);
+                photo = thumbnail;
+
+                takePhotoButton.setText("Tomar otra foto");
+                takePhotoButton.setEnabled(true);
+            }
+        });
+
+        cameraWindow.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                if (photo == null) {
+                    takePhotoButton.setEnabled(true);
+                }
+            }
+        });
+
+        cameraWindow.setVisible(true);
+    }
+
     private void saveToDatabase() {
         String cedula = cedulaField.getText();
         String nombres = nombresField.getText();
         String apellidos = apellidosField.getText();
+        String telefono = telefonoField.getText();
         String fechaNacimiento = nacimientoField.getText();
         String expedicionLicencia = licenciaField.getText();
 
-        // Convertir la foto (ImageIcon) a un arreglo de bytes
         byte[] fotoBytes = null;
-        if (photo != null) {
+        if (originalCapturedPhoto != null) {
             try {
-                // Convertir el ImageIcon a BufferedImage
-                BufferedImage bufferedImage = new BufferedImage(
-                    photo.getIconWidth(),
-                    photo.getIconHeight(),
-                    BufferedImage.TYPE_INT_RGB
-                );
-                Graphics2D g2d = bufferedImage.createGraphics();
-                photo.paintIcon(null, g2d, 0, 0);
-                g2d.dispose();
-
-                // Escribir la imagen en un ByteArrayOutputStream
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(bufferedImage, "jpg", baos);
+                ImageIO.write(originalCapturedPhoto, "png", baos);
                 baos.flush();
                 fotoBytes = baos.toByteArray();
                 baos.close();
@@ -222,18 +238,20 @@ public class RegisterDriverWindow extends JFrame {
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String sql = "INSERT INTO Conductores (cedula, nombres, apellidos, fecha_nacimiento, expedicion_licencia, foto) VALUES (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO Conductores (cedula, nombres, apellidos, telefono, fecha_nacimiento, expedicion_licencia, foto) VALUES (?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement statement = connection.prepareStatement(sql);
             statement.setString(1, cedula);
             statement.setString(2, nombres);
             statement.setString(3, apellidos);
-            statement.setDate(4, new java.sql.Date(sdf.parse(fechaNacimiento).getTime()));
-            statement.setDate(5, new java.sql.Date(sdf.parse(expedicionLicencia).getTime()));
-            statement.setBytes(6, fotoBytes);
+            statement.setString(4, telefono);
+            statement.setDate(5, new java.sql.Date(sdf.parse(fechaNacimiento).getTime()));
+            statement.setDate(6, new java.sql.Date(sdf.parse(expedicionLicencia).getTime()));
+            statement.setBytes(7, fotoBytes);
 
             int rowsInserted = statement.executeUpdate();
             if (rowsInserted > 0) {
                 JOptionPane.showMessageDialog(this, "Conductor registrado correctamente.");
+                clearFields(); // Limpiar los campos después del registro
             }
         } catch (SQLException | ParseException ex) {
             JOptionPane.showMessageDialog(this, "Error al guardar en la base de datos: " + ex.getMessage());
@@ -241,11 +259,24 @@ public class RegisterDriverWindow extends JFrame {
         }
     }
 
+    private void clearFields() {
+        cedulaField.setText("");
+        nombresField.setText("");
+        apellidosField.setText("");
+        telefonoField.setText("");
+        nacimientoField.setText("");
+        licenciaField.setText("");
+        photoLabel.setIcon(null);
+        photo = null;
+        originalCapturedPhoto = null;
+        takePhotoButton.setText("Tomar foto");
+        takePhotoButton.setEnabled(true);
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new RegisterDriverWindow().setVisible(true));
     }
 
-    // Clase interna para validar fechas
     private static class DateValidationKeyListener extends KeyAdapter {
         private final JTextField textField;
         private final int minYears;

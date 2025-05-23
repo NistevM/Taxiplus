@@ -9,6 +9,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import javax.imageio.ImageIO;
+import org.opencv.videoio.Videoio;
 
 public class CameraWindow extends JFrame {
     public interface PhotoCaptureListener {
@@ -23,7 +24,7 @@ public class CameraWindow extends JFrame {
     public CameraWindow(PhotoCaptureListener listener) {
         this.listener = listener;
         setTitle("Cámara");
-        setSize(640, 480);
+        setSize(650, 535);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -33,6 +34,8 @@ public class CameraWindow extends JFrame {
         JButton captureButton = new JButton("Tomar foto");
         captureButton.addActionListener(e -> capturePhoto());
         add(captureButton, BorderLayout.SOUTH);
+
+        setLocationRelativeTo(null); // Centrar la ventana en la pantalla
 
         initCamera();
     }
@@ -46,6 +49,10 @@ public class CameraWindow extends JFrame {
             dispose();
             return;
         }
+
+        // Configurar resolución alta
+        webcam.set(Videoio.CAP_PROP_FRAME_WIDTH, 800);
+        webcam.set(Videoio.CAP_PROP_FRAME_HEIGHT, 600);
 
         isRunning = true;
         Thread videoFeedThread = new Thread(() -> {
@@ -77,7 +84,7 @@ public class CameraWindow extends JFrame {
 
     private BufferedImage matToBufferedImage(Mat mat) {
         MatOfByte mob = new MatOfByte();
-        Imgcodecs.imencode(".jpg", mat, mob);
+        Imgcodecs.imencode(".png", mat, mob); // Cambiado a PNG para evitar pérdida de calidad
         byte[] byteArray = mob.toArray();
 
         try {
@@ -100,7 +107,6 @@ public class CameraWindow extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             new CameraWindow(photo -> {
-                // Aquí puedes manejar la foto capturada si ejecutas esta clase de forma independiente.
                 JOptionPane.showMessageDialog(null, "¡Foto tomada!");
             }).setVisible(true);
         });

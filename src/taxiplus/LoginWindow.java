@@ -61,7 +61,6 @@ public class LoginWindow extends JFrame {
             ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.next()) {
-                JOptionPane.showMessageDialog(this, "Login exitoso");
                 this.dispose(); // Cerrar la ventana de login
                 new MainMenuWindow().setVisible(true); // Abrir el menú principal
             } else {
